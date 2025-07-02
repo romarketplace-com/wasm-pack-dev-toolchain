@@ -181,7 +181,7 @@ runs:
         curl -L "${{ steps.wasm-pack-release.outputs.download_url }}" -o "${{ steps.wasm-pack-release.outputs.filename }}"
         
         echo "Extracting wasm-pack..."
-        tar -xzf "${{ steps.wasm-pack-release.outputs.filename }}" -C "$HOME/.local/bin"
+        tar -xzf "${{ steps.wasm-pack-release.outputs.filename }}"
         
         # Find the extracted directory (should match the filename without .tar.gz)
         EXTRACTED_DIR=$(echo "${{ steps.wasm-pack-release.outputs.filename }}" | sed 's/\.tar\.gz$//')
