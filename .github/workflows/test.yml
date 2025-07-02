@@ -22,7 +22,7 @@ jobs:
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           
       - name: Install wasm tools
-        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0
+        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
 
       - name: Build and optimize
         run: | # This step builds the WASM package and optimizes it.
