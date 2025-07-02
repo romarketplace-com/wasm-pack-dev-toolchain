@@ -228,6 +228,7 @@ runs:
         done
         
         echo "binaryen tools installed successfully"
+        ls "$HOME/.local/bin"
         "$HOME/.local/bin/wasm-opt${{ steps.binaryen-release.outputs.ext }}" --version
 
     - name: Verify installations
