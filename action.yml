@@ -1,4 +1,5 @@
 name: Install wasm-pack & wasm-opt
+description: 'Installs wasm-pack and binaryen (wasm-opt) tools for WebAssembly development with caching support.'
 author: RoMarketplace Team (romarketplace-com)
 branding:
   icon: 'download-cloud'
