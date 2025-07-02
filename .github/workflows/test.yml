@@ -1,0 +1,29 @@
+name: Build WASM
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          
+      - name: Cache Rust deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: rust-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Install WASM tools
+        uses: romarketplace-com/wasm-pack-dev-toolchain@v1
+
+      - name: Build and optimize
+        run: | # This step builds the WASM package and optimizes it.
+          wasm-pack build --target web --out-dir example/pkg --release
