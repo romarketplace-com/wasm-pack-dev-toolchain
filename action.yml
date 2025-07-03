@@ -66,16 +66,13 @@ runs:
           API_URL="https://api.github.com/repos/rustwasm/wasm-pack/releases/tags/v${{ inputs.wasm-pack-version }}"
         fi
         
-        # Use curl with authentication and fail-fast to prevent errors
         RELEASE_DATA=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" "$API_URL")
-        
         if [ $? -ne 0 ]; then
           echo "Error: Failed to fetch release data for wasm-pack from $API_URL"
           exit 1
         fi
 
         VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name')
-        
         if [ "$VERSION" = "null" ] || [ -z "$VERSION" ]; then
           echo "Error: Could not extract version from API response for wasm-pack."
           echo "Response: $RELEASE_DATA"
@@ -85,7 +82,6 @@ runs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "wasm-pack version: $VERSION"
         
-        # Determine file extension and platform naming
         case "${{ steps.platform.outputs.os }}" in
           "windows") 
             EXT=".exe"
@@ -101,7 +97,6 @@ runs:
             ;;
         esac
         
-        # Construct expected filename
         FILENAME="wasm-pack-${VERSION}-${{ steps.platform.outputs.arch }}-${PLATFORM_NAME}.tar.gz"
         DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r --arg filename "$FILENAME" '.assets[] | select(.name == $filename) | .browser_download_url')
         
@@ -128,16 +123,13 @@ runs:
           API_URL="https://api.github.com/repos/WebAssembly/binaryen/releases/tags/version_${{ inputs.binaryen-version }}"
         fi
         
-        # Use curl with authentication and fail-fast to prevent errors
         RELEASE_DATA=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" "$API_URL")
-
         if [ $? -ne 0 ]; then
           echo "Error: Failed to fetch release data for binaryen from $API_URL"
           exit 1
         fi
         
         VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name')
-
         if [ "$VERSION" = "null" ] || [ -z "$VERSION" ]; then
           echo "Error: Could not extract version from API response for binaryen."
           echo "Response: $RELEASE_DATA"
@@ -147,7 +139,6 @@ runs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "binaryen version: $VERSION"
         
-        # Determine platform naming for binaryen
         case "${{ steps.platform.outputs.os }}" in
           "windows") 
             PLATFORM_NAME="x86_64-windows"
@@ -169,7 +160,6 @@ runs:
             ;;
         esac
         
-        # Construct expected filename
         FILENAME="binaryen-${VERSION}-${PLATFORM_NAME}.tar.gz"
         DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r --arg filename "$FILENAME" '.assets[] | select(.name == $filename) | .browser_download_url')
         
@@ -204,8 +194,6 @@ runs:
       with:
         path: ~/.local/bin
         key: ${{ steps.cache-key.outputs.key }}
-        restore-keys: |
-          wasm-tools-${{ steps.platform.outputs.os }}-${{ steps.platform.outputs.arch }}-
 
     - name: Download and install wasm-pack
       shell: bash
@@ -222,12 +210,13 @@ runs:
         cp "${EXTRACTED_DIR}/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}"
         chmod +x "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}"
         
-        if [ "${{ runner.os }}" != "Windows" ]; then
-          ln -s "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" "$HOME/.local/bin/wasm-pack"
+        # On Windows, create a copy without the .exe for consistent calling
+        if [ ! -z "${{ steps.wasm-pack-release.outputs.ext }}" ]; then
+          cp "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" "$HOME/.local/bin/wasm-pack"
         fi
         
         echo "wasm-pack installed successfully"
-        "$HOME/.local/bin/wasm-pack" --version
+        "wasm-pack" --version
 
     - name: Download and install binaryen (wasm-opt)
       shell: bash
@@ -247,26 +236,21 @@ runs:
             cp "${EXTRACTED_DIR}/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}"
             chmod +x "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}"
             
-            if [ "${{ runner.os }}" != "Windows" ]; then
-              ln -s "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" "$HOME/.local/bin/${tool}"
+            # On Windows, create a copy without the .exe for consistent calling
+            if [ ! -z "${{ steps.binaryen-release.outputs.ext }}" ]; then
+              cp "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" "$HOME/.local/bin/${tool}"
             fi
             echo "${tool} installed successfully"
           fi
         done
         
         echo "binaryen tools installed successfully"
-        "$HOME/.local/bin/wasm-opt" --version
+        "wasm-opt" --version
 
     - name: Verify installations
       shell: bash
       run: |
-        echo "=== Installation Summary ==="
-        echo "wasm-pack version: ${{ steps.wasm-pack-release.outputs.version }}"
-        echo "binaryen version: ${{ steps.binaryen-release.outputs.version }}"
-        echo "Cache hit: ${{ steps.cache-tools.outputs.cache-hit }}"
-        echo ""
         echo "=== Verifying installations ==="
-        
         if command -v wasm-pack >/dev/null 2>&1; then
           echo "✅ wasm-pack is available in PATH"
           wasm-pack --version
@@ -285,9 +269,9 @@ runs:
         
         echo ""
         if [ "${{ steps.cache-tools.outputs.cache-hit }}" = "true" ]; then
-          echo "🚀 Tools were restored from cache (fast build)!"
+          echo "🚀 Tools were restored from cache!"
         else
-          echo "📦 Tools were freshly installed and cached for next time!"
+          echo "📦 Tools were freshly installed and cached."
         fi
         echo "🎉 wasm-pack and binaryen tools are ready to use!"
 
