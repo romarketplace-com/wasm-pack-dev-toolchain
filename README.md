@@ -29,7 +29,7 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install wasm tools
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
 
 - name: Build WebAssembly
   run: |
@@ -41,10 +41,10 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install specific versions
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
   with:
-    binaryen-version:  '118'      # or 'latest'
-    wasm-pack-version: '0.13.0'   # or 'latest'
+    binaryen-version:  '123'      # or 'latest'
+    wasm-pack-version: '0.13.1'   # or 'latest'
 ```
 
 ## Caching
@@ -56,7 +56,7 @@ Tools are cached automatically to avoid re-downloading on every run:
 
 Cache keys include OS, architecture, and tool versions, so you'll get a fresh download when versions change but hit the cache otherwise.
 
-Example cache key: `wasm-tools-linux-x86_64-v0.13.0-version_118`
+Example cache key: `wasm-tools-linux-x86_64-v0.13.1-version_123`
 
 ### Cross-platform builds
 
@@ -68,7 +68,7 @@ strategy:
 runs-on: ${{ matrix.os }}
 steps:
   - uses: actions/checkout@v4
-  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
   - run: |
       wasm-pack --version
       wasm-opt --version
@@ -78,8 +78,8 @@ steps:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.0`) | `latest` |
-| `binaryen-version` | binaryen version (`latest` or specific like `118`) | `latest` |
+| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.1`) | `latest` |
+| `binaryen-version` | binaryen version (`latest` or specific like `123`) | `latest` |
 
 ## Platform support
 
@@ -118,7 +118,7 @@ jobs:
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           
       - name: Install WASM tools
-        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
         
       - name: Build and optimize
         run: |
@@ -142,7 +142,7 @@ jobs:
           node-version: '18'
           cache: 'npm'
           
-      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
         
       - name: Build and optimize
         run: |
@@ -171,7 +171,7 @@ If `wasm-pack` or `wasm-opt` aren't found after installation:
 ```yaml
 - name: Debug with fresh install
   run: echo "cache-bust-$(date +%s)" >> $GITHUB_ENV
-- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
 ```
 
 Or clear the cache manually in your repo's Actions tab.
