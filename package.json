@@ -1,7 +1,7 @@
 {
   "name": "@tbmwebui/wasm-pack-dev-toolchain",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.0",
   "description": "Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https://github.com/WebAssembly/binaryen/tree/main) [wasm-opt](https://github.com/WebAssembly/binaryen/blob/main/src/tools/wasm-opt.cpp) in your GitHub Actions workflows. No more manually managing WebAssembly toolchain downloads.",
   "homepage": "https://github.com/romarketplace-com/wasm-pack-dev-toolchain-installer#readme",
   "bugs": {

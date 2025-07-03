@@ -29,7 +29,7 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install wasm tools
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
 
 - name: Build WebAssembly
   run: |
@@ -41,7 +41,7 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install specific versions
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
   with:
     binaryen-version:  '118'      # or 'latest'
     wasm-pack-version: '0.13.0'   # or 'latest'
@@ -68,7 +68,7 @@ strategy:
 runs-on: ${{ matrix.os }}
 steps:
   - uses: actions/checkout@v4
-  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
   - run: |
       wasm-pack --version
       wasm-opt --version
@@ -118,7 +118,7 @@ jobs:
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           
       - name: Install WASM tools
-        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
         
       - name: Build and optimize
         run: |
@@ -142,7 +142,7 @@ jobs:
           node-version: '18'
           cache: 'npm'
           
-      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
         
       - name: Build and optimize
         run: |
@@ -171,7 +171,7 @@ If `wasm-pack` or `wasm-opt` aren't found after installation:
 ```yaml
 - name: Debug with fresh install
   run: echo "cache-bust-$(date +%s)" >> $GITHUB_ENV
-- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.0
 ```
 
 Or clear the cache manually in your repo's Actions tab.
