@@ -57,14 +57,31 @@ runs:
     - name: Get wasm-pack release info
       shell: bash
       id: wasm-pack-release
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         if [ "${{ inputs.wasm-pack-version }}" = "latest" ]; then
-          RELEASE_DATA=$(curl -s "https://api.github.com/repos/rustwasm/wasm-pack/releases/latest")
+          API_URL="https://api.github.com/repos/rustwasm/wasm-pack/releases/latest"
         else
-          RELEASE_DATA=$(curl -s "https://api.github.com/repos/rustwasm/wasm-pack/releases/tags/v${{ inputs.wasm-pack-version }}")
+          API_URL="https://api.github.com/repos/rustwasm/wasm-pack/releases/tags/v${{ inputs.wasm-pack-version }}"
         fi
         
+        # Use curl with authentication and fail-fast to prevent errors
+        RELEASE_DATA=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" "$API_URL")
+        
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to fetch release data for wasm-pack from $API_URL"
+          exit 1
+        fi
+
         VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name')
+        
+        if [ "$VERSION" = "null" ] || [ -z "$VERSION" ]; then
+          echo "Error: Could not extract version from API response for wasm-pack."
+          echo "Response: $RELEASE_DATA"
+          exit 1
+        fi
+        
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "wasm-pack version: $VERSION"
         
@@ -102,14 +119,31 @@ runs:
     - name: Get binaryen release info
       shell: bash
       id: binaryen-release
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         if [ "${{ inputs.binaryen-version }}" = "latest" ]; then
-          RELEASE_DATA=$(curl -s "https://api.github.com/repos/WebAssembly/binaryen/releases/latest")
+          API_URL="https://api.github.com/repos/WebAssembly/binaryen/releases/latest"
         else
-          RELEASE_DATA=$(curl -s "https://api.github.com/repos/WebAssembly/binaryen/releases/tags/version_${{ inputs.binaryen-version }}")
+          API_URL="https://api.github.com/repos/WebAssembly/binaryen/releases/tags/version_${{ inputs.binaryen-version }}"
+        fi
+        
+        # Use curl with authentication and fail-fast to prevent errors
+        RELEASE_DATA=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" "$API_URL")
+
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to fetch release data for binaryen from $API_URL"
+          exit 1
         fi
         
         VERSION=$(echo "$RELEASE_DATA" | jq -r '.tag_name')
+
+        if [ "$VERSION" = "null" ] || [ -z "$VERSION" ]; then
+          echo "Error: Could not extract version from API response for binaryen."
+          echo "Response: $RELEASE_DATA"
+          exit 1
+        fi
+        
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "binaryen version: $VERSION"
         
@@ -135,7 +169,7 @@ runs:
             ;;
         esac
         
-        # Construct expected filename (binaryen uses different naming pattern)
+        # Construct expected filename
         FILENAME="binaryen-${VERSION}-${PLATFORM_NAME}.tar.gz"
         DOWNLOAD_URL=$(echo "$RELEASE_DATA" | jq -r --arg filename "$FILENAME" '.assets[] | select(.name == $filename) | .browser_download_url')
         
@@ -181,23 +215,19 @@ runs:
         curl -L "${{ steps.wasm-pack-release.outputs.download_url }}" -o "${{ steps.wasm-pack-release.outputs.filename }}"
         
         echo "Extracting wasm-pack..."
+        EXTRACTED_DIR=$(tar -tzf "${{ steps.wasm-pack-release.outputs.filename }}" | head -1 | cut -f1 -d"/")
         tar -xzf "${{ steps.wasm-pack-release.outputs.filename }}"
         
-        # Find the extracted directory (should match the filename without .tar.gz)
-        EXTRACTED_DIR=$(echo "${{ steps.wasm-pack-release.outputs.filename }}" | sed 's/\.tar\.gz$//')
-        
-        # Copy wasm-pack binary to local bin
+        echo "Copying wasm-pack binary to local bin..."
         cp "${EXTRACTED_DIR}/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}"
         chmod +x "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}"
         
-        # Create symlink without extension if on Unix
-        if [ "${{ steps.wasm-pack-release.outputs.ext }}" = ".exe" ]; then
-          # On Windows, we may need both with and without .exe
-          cp "$HOME/.local/bin/wasm-pack.exe" "$HOME/.local/bin/wasm-pack"
+        if [ "${{ runner.os }}" != "Windows" ]; then
+          ln -s "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" "$HOME/.local/bin/wasm-pack"
         fi
         
         echo "wasm-pack installed successfully"
-        "$HOME/.local/bin/wasm-pack${{ steps.wasm-pack-release.outputs.ext }}" --version
+        "$HOME/.local/bin/wasm-pack" --version
 
     - name: Download and install binaryen (wasm-opt)
       shell: bash
@@ -207,36 +237,25 @@ runs:
         curl -L "${{ steps.binaryen-release.outputs.download_url }}" -o "${{ steps.binaryen-release.outputs.filename }}"
         
         echo "Extracting binaryen..."
+        EXTRACTED_DIR=$(tar -tzf "${{ steps.binaryen-release.outputs.filename }}" | head -1 | cut -f1 -d"/")
         tar -xzf "${{ steps.binaryen-release.outputs.filename }}"
         
-        # Find the extracted directory (should match the filename without .tar.gz)
-        EXTRACTED_DIR=$(echo "${{ steps.binaryen-release.outputs.filename }}" | sed 's/\.tar\.gz$//')
-        
-        echo "Extracted to: ${EXTRACTED_DIR}"
-
-        # From the release file the binaryen tools are located in the bin directory ./${EXTRACTED_DIR}/bin
         echo "Copying binaryen tools from ${EXTRACTED_DIR}/bin to $HOME/.local/bin"
-        ls ${EXTRACTED_DIR}/bin
-        mkdir -p "$HOME/.local/bin"
-
-        # Copy all binaryen tools to local bin (focus on wasm-opt but include others)
+        
         for tool in wasm-opt wasm-as wasm-dis wasm2js wasm-reduce wasm-shell wasm-emscripten-finalize wasm-ctor-eval wasm-merge wasm-metadce; do
           if [ -f "${EXTRACTED_DIR}/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" ]; then
             cp "${EXTRACTED_DIR}/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}"
             chmod +x "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}"
             
-            # Create symlink without extension if on Unix
-            if [ "${{ steps.binaryen-release.outputs.ext }}" = ".exe" ]; then
-              cp "$HOME/.local/bin/${tool}.exe" "$HOME/.local/bin/${tool}"
+            if [ "${{ runner.os }}" != "Windows" ]; then
+              ln -s "$HOME/.local/bin/${tool}${{ steps.binaryen-release.outputs.ext }}" "$HOME/.local/bin/${tool}"
             fi
-            
             echo "${tool} installed successfully"
           fi
         done
         
         echo "binaryen tools installed successfully"
-        ls "$HOME/.local/bin"
-        "$HOME/.local/bin/wasm-opt${{ steps.binaryen-release.outputs.ext }}" --version
+        "$HOME/.local/bin/wasm-opt" --version
 
     - name: Verify installations
       shell: bash
@@ -265,11 +284,6 @@ runs:
         fi
         
         echo ""
-        echo "=== Available tools ==="
-        echo "Installed in: $HOME/.local/bin"
-        ls -la "$HOME/.local/bin" | grep -E "(wasm-|binaryen)" || echo "No tools found in listing"
-        
-        echo ""
         if [ "${{ steps.cache-tools.outputs.cache-hit }}" = "true" ]; then
           echo "🚀 Tools were restored from cache (fast build)!"
         else
@@ -281,9 +295,7 @@ runs:
       shell: bash
       if: steps.cache-tools.outputs.cache-hit != 'true'
       run: |
-        echo "Cleaning up downloaded files..."
-        rm -f "${{ steps.wasm-pack-release.outputs.filename }}"
-        rm -f "${{ steps.binaryen-release.outputs.filename }}"
-        rm -rf "$(echo "${{ steps.wasm-pack-release.outputs.filename }}" | sed 's/\.tar\.gz$//')"
-        rm -rf "$(echo "${{ steps.binaryen-release.outputs.filename }}" | sed 's/\.tar\.gz$//')"
+        echo "Cleaning up downloaded files and extracted directories..."
+        rm -f wasm-pack-*.tar.gz binaryen-*.tar.gz
+        rm -rf wasm-pack-*/ binaryen-*/
         echo "Cleanup completed"
