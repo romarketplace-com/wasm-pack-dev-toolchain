@@ -1,29 +1,47 @@
-name: Build WASM
+# .github/workflows/test.yml
+
+name: Build and Test Local Action
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Rust
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-          
-      - name: Cache Rust deps
+
+      - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: rust-${{ hashFiles('**/Cargo.lock') }}
-          
-      - name: Install wasm tools
-        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build and optimize
-        run: | # This step builds the WASM package and optimizes it.
-          wasm-pack build --target web --out-dir example/pkg --release
+      - name: Install wasm tools (using local action)
+        # This tells the runner to look for action.yml in the root of this repo
+        uses: ./
+        with:
+          wasm-pack-version: latest
+          binaryen-version: latest
+
+      - name: Build and optimize WASM package
+        run: |
+          # This command will now use the tools set up by your local action
+          wasm-pack build ./example --target web --out-dir ./example/pkg --release
+        shell: bash
+
+      - name: Verify build output
+        run: |
+          # Check that the expected files were created
+          ls -R ./example/target
+        shell: bash

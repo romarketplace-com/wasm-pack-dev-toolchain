@@ -43,8 +43,8 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 - name: Install specific versions
   uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
   with:
-    binaryen-version:  '118'      # or 'latest'
-    wasm-pack-version: '0.13.0'   # or 'latest'
+    binaryen-version:  '123'      # or 'latest'
+    wasm-pack-version: '0.13.1'   # or 'latest'
 ```
 
 ## Caching
@@ -56,7 +56,7 @@ Tools are cached automatically to avoid re-downloading on every run:
 
 Cache keys include OS, architecture, and tool versions, so you'll get a fresh download when versions change but hit the cache otherwise.
 
-Example cache key: `wasm-tools-linux-x86_64-v0.13.0-version_118`
+Example cache key: `wasm-tools-linux-x86_64-v0.13.1-version_123`
 
 ### Cross-platform builds
 
@@ -78,8 +78,8 @@ steps:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.0`) | `latest` |
-| `binaryen-version` | binaryen version (`latest` or specific like `118`) | `latest` |
+| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.1`) | `latest` |
+| `binaryen-version` | binaryen version (`latest` or specific like `123`) | `latest` |
 
 ## Platform support
 
