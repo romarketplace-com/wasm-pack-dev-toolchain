@@ -29,7 +29,7 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install wasm tools
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
 
 - name: Build WebAssembly
   run: |
@@ -41,10 +41,10 @@ Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https
 
 ```yaml
 - name: Install specific versions
-  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+  uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
   with:
-    binaryen-version:  '123'      # or 'latest'
-    wasm-pack-version: '0.13.1'   # or 'latest'
+    binaryen-version:  '118'      # or 'latest'
+    wasm-pack-version: '0.13.0'   # or 'latest'
 ```
 
 ## Caching
@@ -56,7 +56,7 @@ Tools are cached automatically to avoid re-downloading on every run:
 
 Cache keys include OS, architecture, and tool versions, so you'll get a fresh download when versions change but hit the cache otherwise.
 
-Example cache key: `wasm-tools-linux-x86_64-v0.13.1-version_123`
+Example cache key: `wasm-tools-linux-x86_64-v0.13.0-version_118`
 
 ### Cross-platform builds
 
@@ -68,7 +68,7 @@ strategy:
 runs-on: ${{ matrix.os }}
 steps:
   - uses: actions/checkout@v4
-  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+  - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
   - run: |
       wasm-pack --version
       wasm-opt --version
@@ -78,8 +78,8 @@ steps:
 
 | Input | Description | Default |
 |-------|-------------|---------|
-| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.1`) | `latest` |
-| `binaryen-version` | binaryen version (`latest` or specific like `123`) | `latest` |
+| `wasm-pack-version` | wasm-pack version (`latest` or specific like `0.13.0`) | `latest` |
+| `binaryen-version` | binaryen version (`latest` or specific like `118`) | `latest` |
 
 ## Platform support
 
@@ -118,7 +118,7 @@ jobs:
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           
       - name: Install WASM tools
-        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+        uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
         
       - name: Build and optimize
         run: |
@@ -142,7 +142,7 @@ jobs:
           node-version: '18'
           cache: 'npm'
           
-      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+      - uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
         
       - name: Build and optimize
         run: |
@@ -171,7 +171,7 @@ If `wasm-pack` or `wasm-opt` aren't found after installation:
 ```yaml
 - name: Debug with fresh install
   run: echo "cache-bust-$(date +%s)" >> $GITHUB_ENV
-- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.2
+- uses: romarketplace-com/wasm-pack-dev-toolchain@v1.0.1
 ```
 
 Or clear the cache manually in your repo's Actions tab.
@@ -192,12 +192,84 @@ The action will list available release assets if it can't find the right downloa
 
 PRs welcome. For big changes, open an issue first.
 
-To test locally:
-1. Fork the repo
-2. Make your changes
-3. Test on different OS/arch combinations
-4. Submit PR
+### How to build
+
+This project is built with TypeScript and packaged as a GitHub Action. To set up your development environment:
+
+#### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v16 or later recommended)
+- npm (included with Node.js) or [yarn](https://yarnpkg.com/)
+
+#### Setup and build
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/romarketplace-com/wasm-pack-dev-toolchain-installer.git
+   cd wasm-pack-dev-toolchain-installer
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn
+   ```
+
+3. Build commands:
+   ```bash
+   # Compile TypeScript to JavaScript
+   npm run build
+   # or
+   yarn build
+
+   # Format code with Biome
+   npm run format:write
+   # or
+   yarn format:write
+
+   # Lint code
+   npm run lint
+   # or
+   yarn lint:fix
+
+   # Package the action with ncc
+   npm run pack
+   # or
+   yarn pack
+
+   # Run all build steps in sequence
+   npm run all
+   # or
+   yarn all
+   ```
+
+4. Testing locally with [act](https://github.com/nektos/act):
+   ```bash
+   # Install act if you haven't already
+   # Then run your action locally
+   act -j <job-name>
+   ```
+
+#### Project structure
+
+- `src/` - TypeScript source code
+  - `index.ts` - Main entry point for the action
+  - `dependencies.ts` - Logic for handling tool dependencies, downloads, and setup
+- `dist/` - Compiled TypeScript output
+- `lib/` - Packaged action code (produced by `npm run pack`)
+- `action.yml` - GitHub Action definition
+- `example/` - Example Rust WebAssembly project for testing
+
+#### Making changes
+
+1. Make your code changes in the `src/` directory
+2. Run `npm run build` to compile TypeScript
+3. Run `npm run lint:fix` to ensure code style consistency
+4. Run `npm run pack` to package the action using ncc
+5. Test your changes locally with act
+6. Commit and push your changes
 
 ## License
 
-This project is licensed under the **MIT License**, for more information check the [LICENSE file](./LICENSE).
+This project is licensed under the **MIT License**, for more information, check the [LICENSE file](./LICENSE).
