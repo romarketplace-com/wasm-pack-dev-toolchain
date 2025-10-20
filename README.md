@@ -1,6 +1,6 @@
 # WASM Pack Dev Toolchain Action
 
-Installs [wasm-pack](https://github.com/rustwasm/wasm-pack) and [binaryen](https://github.com/WebAssembly/binaryen/tree/main), [wasm-opt](https://github.com/WebAssembly/binaryen/blob/main/src/tools/wasm-opt.cpp) in your GitHub Actions workflows. No more manually managing WebAssembly toolchain downloads.
+Installs [wasm-pack](https://github.com/rustwasm/wasm-pack), [binaryen](https://github.com/WebAssembly/binaryen/tree/main), and [wasm-opt](https://github.com/WebAssembly/binaryen/blob/main/src/tools/wasm-opt.cpp) in your GitHub Actions workflows. No more manually managing WebAssembly toolchain downloads.
 
 ## What it does
 
